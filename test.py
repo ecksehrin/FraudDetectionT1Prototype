@@ -1,7 +1,9 @@
 from hashlib import sha256
 import csv
 
-//Stpring of information, will be put into .csv with hashing later on
+//Modified version of code taken from Daniel Afriyie, https://stackoverflow.com/questions/69301274/how-to-make-sign-up-and-login-program-in-python
+
+//String of information, will be put into .csv with hashing later on
 usernames = []
 passwords = []
 names = []
