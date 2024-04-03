@@ -5,7 +5,7 @@ events = pymysql.connect(
     host='frauddetectiont1.database.windows.net',
     user='team1',
     password='T1frauddetection',
-    db='Events',
+    db='FraudDetectionDatabase',
     charset='utf8mb4',
     cursorclass=pymysql.cursors.DictCursor
 
