@@ -27,8 +27,16 @@ rows = cursor.fetchall()
 print(rows)
 #Pandas function to read all rows from Events
 df = pd.read_sql("SELECT * FROM Events", conn)
-#Prints Pandas version of table
-print(df)
+
+#Removed section that expanded on pandas printing options, changed to just use to_string
+#with pd.option_context('display.max_rows', None,
+                       #'display.max_columns', None,
+                       #'display.precision', 3,
+                       #):
+
+# Prints Pandas version of table
+print(df.to_string())
+
 cursor.close()
 conn.close()
 
