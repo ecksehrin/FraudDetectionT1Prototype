@@ -1,25 +1,34 @@
-pip install pymysql
-import pymysql
+#Code taken from Tech with Hitch, https://www.youtube.com/watch?v=BgkcKCvuCMM
 
-events = pymysql.connect(
-    host='frauddetectiont1.database.windows.net',
-    user='team1',
-    password='T1frauddetection',
-    db='FraudDetectionDatabase',
-    charset='utf8mb4',
-    cursorclass=pymysql.cursors.DictCursor
+#Importing ODBC and Pandas packages, pip install pyodbc and pandas in Windows console
+import pyodbc
+import pandas as pd
 
-  try:
-    with events.cursor() as cursor:
-        # Read data from database
-        sql = "SELECT * FROM `Events`"
-        cursor.execute(sql)
+#Connection string including server information
+cnxn_str = (
+    'DRIVER={ODBC Driver 17 for SQL Server};'
+    'SERVER=frauddetectiont1.database.windows.net;'
+    'DATABASE=FraudDetectionDatabase;'
+    'UID=team1;'
+    'PWD=T1frauddetection'
+)
 
-        # Fetch all rows
-        rows = cursor.fetchall()
+#pyodbc connect function to connect to SQL Database
+conn = pyodbc.connect(cnxn_str)
 
-        # Print results
-        for row in rows:
-            print(row)
-finally:
-    events.close()
+#Create cursor to interact with database
+cursor = conn.cursor()
+
+#Execute SQL to read all items from Events
+cursor.execute("SELECT * FROM Events")
+#Fetchall to include all rows from table
+rows = cursor.fetchall()
+#Prints Rows
+print(rows)
+#Pandas function to read all rows from Events
+df = pd.read_sql("SELECT * FROM Events", conn)
+#Prints Pandas version of table
+print(df)
+cursor.close()
+conn.close()
+
