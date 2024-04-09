@@ -3,7 +3,7 @@ import csv
 
 //Modified version of code taken from Daniel Afriyie, https://stackoverflow.com/questions/69301274/how-to-make-sign-up-and-login-program-in-python
 
-//String of information, will be put into .csv with hashing later on
+//String of information will be put into .csv with hashing later on
 usernames = []
 passwords = []
 names = []
@@ -32,3 +32,23 @@ while True:
         login()
     if account_ans == "3":
         break
+
+def check_large_fund_transfers(transactions):
+    large_transfers = []
+    for transaction in transactions:
+        if transaction['amount'] >= 500:
+            large_transfers.append(transaction)
+    return large_transfers
+
+# Example usage:
+transactions = [
+    {'id': 1, 'amount': 300},
+    {'id': 2, 'amount': 750},
+    {'id': 3, 'amount': 200},
+    {'id': 4, 'amount': 600}
+]
+
+large_transfers = check_large_fund_transfers(transactions)
+print("Large fund transfers:")
+for transaction in large_transfers:
+    print(f"Transaction ID: {transaction['id']}, Amount: ${transaction['amount']}")
