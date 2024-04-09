@@ -113,3 +113,22 @@ choice = input('Enter 1 to insert event.\n')
 if '1' in choice:
     insert_event()
 
+def check_large_fund_transfers(transactions):
+    large_transfers = []
+    for transaction in transactions:
+        if transaction['amount'] >= 500:
+            large_transfers.append(transaction)
+    return large_transfers
+
+# Example usage:
+transactions = [
+    {'id': 1, 'amount': 300},
+    {'id': 2, 'amount': 750},
+    {'id': 3, 'amount': 200},
+    {'id': 4, 'amount': 600}
+]
+
+large_transfers = check_large_fund_transfers(transactions)
+print("Large fund transfers:")
+for transaction in large_transfers:
+    print(f"Transaction ID: {transaction['id']}, Amount: ${transaction['amount']}")
