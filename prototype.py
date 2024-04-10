@@ -1,5 +1,3 @@
-#Code partially taken from Tech with Hitch, https://www.youtube.com/watch?v=BgkcKCvuCMM
-
 #Importing ODBC for SQL intergration
 import pyodbc
 
@@ -11,6 +9,14 @@ import tkinter as tk
 
 from datetime import  datetime
 
+#Gmail SMTP config
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+from os.path import basename
+
+#ODBC Code partially taken from Tech with Hitch, https://www.youtube.com/watch?v=BgkcKCvuCMM
 #Connection string including server information
 cnxn_str = (
     'DRIVER={ODBC Driver 17 for SQL Server};'
@@ -108,11 +114,11 @@ def login():
         # Insert event into SQL Server table for failed login
         insert_event("Failed login attempt")
 
-#Asks to enter event
-choice = input('Enter 1 to insert event.\n')
-if '1' in choice:
-    insert_event()
+# Function to check any occurances of rule 2
+def check_r2():
+    print("Checked")
 
+# Function to check any occurances of rule 3
 def check_large_fund_transfers(transactions):
     large_transfers = []
     for transaction in transactions:
@@ -132,3 +138,50 @@ large_transfers = check_large_fund_transfers(transactions)
 print("Large fund transfers:")
 for transaction in large_transfers:
     print(f"Transaction ID: {transaction['id']}, Amount: ${transaction['amount']}")
+
+#Function to use SMTP to send an email to a device, code from https://stackoverflow.com/questions/3362600/how-to-send-email-attachments by Ferrarezi
+def send_mail(send_from: str, subject: str, text: str,
+send_to: list, files= None):
+
+    send_to= default_address if not send_to else send_to
+
+    msg = MIMEMultipart()
+    msg['From'] = send_from
+    msg['To'] = ', '.join(send_to)
+    msg['Subject'] = subject
+
+    msg.attach(MIMEText(text))
+
+    for f in files or []:
+        with open(f, "rb") as fil:
+            ext = f.split('.')[-1:]
+            attachedfile = MIMEApplication(fil.read(), _subtype = ext)
+            attachedfile.add_header(
+                'content-disposition', 'attachment', filename=basename(f) )
+        msg.attach(attachedfile)
+
+
+    smtp = smtplib.SMTP(host="smtp.gmail.com", port= 587)
+    smtp.starttls()
+    smtp.login(username,password)
+    smtp.sendmail(send_from, send_to, msg.as_string())
+    smtp.close()
+
+username = 't1frauddetection.17@gmail.com'
+password = 'zyro pugd jncl tcqt'
+default_address = ['t1frauddetection.17@gmail.com']
+
+
+#Asks to enter event
+choice = input('Enter 1 to insert event.\n')
+if '1' in choice:
+    insert_event()
+#Email test-Sends email from t1frauddetection.17 to itself with subject and text, optional file
+elif '2' in choice:
+    send_mail(send_from=username,
+              subject="test",
+              text="text",
+              send_to=None,
+              files=None)
+
+
