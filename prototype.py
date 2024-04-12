@@ -16,6 +16,12 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from os.path import basename
 
+#OS for file management
+import os
+
+#Text config
+import sys
+
 #ODBC Code partially taken from Tech with Hitch, https://www.youtube.com/watch?v=BgkcKCvuCMM
 #Connection string including server information
 cnxn_str = (
@@ -32,26 +38,28 @@ conn = pyodbc.connect(cnxn_str)
 #Create cursor to interact with database
 cursor = conn.cursor()
 
-#Execute SQL to read all items from Events
-cursor.execute("SELECT * FROM Events")
-#Fetchall to include all rows from table
-rows = cursor.fetchall()
-#Prints Rows
-print(rows)
-#Pandas function to read all rows from Events
-df = pd.read_sql("SELECT * FROM Events", conn)
 
-#Removed section that expanded on pandas printing options, changed to just use to_string
-#with pd.option_context('display.max_rows', None,
-                       #'display.max_columns', None,
-                       #'display.precision', 3,
-                       #):
+# Execute SQL to read all items from Events
+def print_events():
+    cursor.execute("SELECT * FROM Events")
+    #Fetchall to include all rows from table
+    rows = cursor.fetchall()
+    #Prints Rows
+    print(rows)
+    #Pandas function to read all rows from Events
+    df = pd.read_sql("SELECT * FROM Events", conn)
 
-# Prints Pandas version of table
-print(df.to_string())
+    #Removed section that expanded on pandas printing options, changed to just use to_string
+    #with pd.option_context('display.max_rows', None,
+                           #'display.max_columns', None,
+                           #'display.precision', 3,
+                           #):
 
-cursor.close()
-conn.close()
+    # Prints Pandas version of table
+    print(df.to_string())
+
+    cursor.close()
+    conn.close()
 
 # Function to insert event into SQL Server table
 def insert_event(username=None):
@@ -114,32 +122,39 @@ def login():
         # Insert event into SQL Server table for failed login
         insert_event("Failed login attempt")
 
-# Function to check any occurances of rule 2
-def check_r2():
-    print("Checked")
+# Function to check any occurrences of rule 2
+def check_incorrect_logins():
+    df = pd.read_sql("SELECT IP_Address, COUNT(*) AS c FROM Events GROUP BY IP_Address, Rule_ID HAVING Rule_ID = '2' AND COUNT(*) >= 5;", conn)
+    print(df.to_string())
+    if len(df) != 0:
+        print("Suspicious Activity Detected. Alerting Email, Security, AI Machine Learning System")
+        send_mail(send_from=username,
+                  subject="[Banking System] Alert - Suspicious Activity - Large Transaction",
+                  text="Banking System Detected Large Transfer of Funds.",
+                  send_to=None,
+                  # File directory
+                  files=[r"./large_transactions.csv"])
+    else:
+        print("No Suspicious Behavior Detected")
 
-# Function to check any occurances of rule 3
-def check_large_fund_transfers(transactions):
-    large_transfers = []
-    for transaction in transactions:
-        if transaction['amount'] >= 500:
-            large_transfers.append(transaction)
-    return large_transfers
+# Function to check any occurrences of rule 3
+def check_large_transactions():
+    df = pd.read_sql("SELECT * FROM Events WHERE Rule_ID = '3' AND Amount >= 500.00;", conn)
+    #print(df.to_string())
+    df.to_csv("large_transactions.csv")
+    if len(df) != 0:
+        print("Suspicious Activity Detected. Alerting Email, Security, AI Machine Learning System")
+        send_mail(send_from=username,
+                  subject="[Banking System] Alert - Suspicious Activity - Large Transaction",
+                  text="Banking System Detected Large Transfer of Funds.",
+                  send_to=None,
+                  # File directory
+                  files=[r"./large_transactions.csv"])
+    else:
+        print("No Suspicious Behavior Detected")
 
-# Example usage:
-transactions = [
-    {'id': 1, 'amount': 300},
-    {'id': 2, 'amount': 750},
-    {'id': 3, 'amount': 200},
-    {'id': 4, 'amount': 600}
-]
 
-large_transfers = check_large_fund_transfers(transactions)
-print("Large fund transfers:")
-for transaction in large_transfers:
-    print(f"Transaction ID: {transaction['id']}, Amount: ${transaction['amount']}")
-
-#Function to use SMTP to send an email to a device, code from https://stackoverflow.com/questions/3362600/how-to-send-email-attachments by Ferrarezi
+# Function to use SMTP to send an email to a device, code from https://stackoverflow.com/questions/3362600/how-to-send-email-attachments by Ferrarezi
 def send_mail(send_from: str, subject: str, text: str,
 send_to: list, files= None):
 
@@ -167,21 +182,71 @@ send_to: list, files= None):
     smtp.sendmail(send_from, send_to, msg.as_string())
     smtp.close()
 
+# Function to send text messages, Code from https://medium.com/testingonprod/how-to-send-text-messages-with-python-for-free-a7c92816e1a4
+def send_text(phone_number, carrier, message):
+    recipient = phone_number + CARRIERS[carrier]
+    auth = (username, password)
+
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()
+    server.login(auth[0], auth[1])
+
+    server.sendmail(auth[0], recipient, message)
+
+#send_mail and send_text connections
 username = 't1frauddetection.17@gmail.com'
 password = 'zyro pugd jncl tcqt'
 default_address = ['t1frauddetection.17@gmail.com']
 
-
-#Asks to enter event
-choice = input('Enter 1 to insert event.\n')
-if '1' in choice:
-    insert_event()
-#Email test-Sends email from t1frauddetection.17 to itself with subject and text, optional file
-elif '2' in choice:
-    send_mail(send_from=username,
-              subject="test",
-              text="text",
-              send_to=None,
-              files=None)
+#send_text carriers handle
+CARRIERS = {
+    "att": "@mms.att.net",
+    "tmobile": "@tmomail.net",
+    "verizon": "@vtext.com",
+    "sprint": "@messaging.sprintpcs.com"
+}
 
 
+
+#Menu for operation
+ans=True
+while ans:
+    ans=input("""
+    1) Print Event Table
+    2) Insert an Event
+    3) Simulate Incorrect Logins
+    4) Check for Login
+    5) Check for Transactions
+    6) Quit
+    7) Email Test
+    8) Text Test
+    9) File Check
+    """)
+    if '1' in ans:
+        print_events()
+    elif '2' in ans:
+        insert_event()
+    elif '3' in ans:
+        #Needs to be implemented
+    elif '4' in ans:
+        check_incorrect_logins()
+    elif '5' in ans:
+        check_large_transactions()
+    elif '6' in ans:
+        ans = False
+    elif '7' in ans:
+        # Email test-Sends email from t1frauddetection.17 to itself with subject and text, optional file
+        send_mail(send_from=username,
+                  subject="[Banking System] Alert - Message",
+                  text="Message system",
+                  send_to=None,
+                  #File directory
+                  files=None)
+    elif '8' in ans:
+        send_text('6786002292', 'tmobile', 'Subject: Banking System\n\nSuspicious Activity Detected')
+    elif '9' in ans:
+        cwd = os.getcwd()  # Get the current working directory (cwd)
+        files = os.listdir(cwd)  # Get all the files in that directory
+        print("Files in %r: %s" % (cwd, files))
+    elif ans !="":
+      print("\n Not Valid Choice Try again")
