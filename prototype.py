@@ -6,7 +6,7 @@ import pandas as pd
 
 #Tkinter package for GUI
 import tkinter as tk
-
+import time
 from datetime import  datetime
 
 #Gmail SMTP config
@@ -18,6 +18,9 @@ from os.path import basename
 
 #OS for file management
 import os
+
+import csv
+import pathlib
 
 #Text config
 import sys
@@ -109,6 +112,40 @@ def insert_event(username=None):
     finally:
         conn.close()
 
+def insert_login_fail(username=None):
+    try:
+        conn = pyodbc.connect(cnxn_str)
+        cursor = conn.cursor()
+        current_time = datetime.now()
+        if username and username in valid_users:
+            customer_id = valid_users[username]["customer_id"]
+        else:
+            #Sets default values to NULL if not used
+            customer_id = None
+            amt = None
+            transtype = None
+            rule = None
+            event_description = 'Login_Incorrect'
+            rule = 2
+            ip = input("Enter IP Address, Ex. 63.117.211.165\n")
+            #Can enter NULL to get a NULL result
+            if 'NULL' in ip:
+                ip = None
+            mac = input("Enter MAC Address, Ex. 08:00:27:9E:36:FB\n")
+            if 'NULL' in mac:
+                mac = None
+            device_id = int(input("Enter Device ID, Ex. 1\n"))
+            cursor.execute("INSERT INTO Events (Event_Description, Customer_ID, Date_Time, IP_Address, Mac_Address, Device_ID, Amount, Transaction_Type, Rule_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (event_description, customer_id, current_time, ip, mac, device_id, amt, transtype, rule))
+            cursor.execute("INSERT INTO Events (Event_Description, Customer_ID, Date_Time, IP_Address, Mac_Address, Device_ID, Amount, Transaction_Type, Rule_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (event_description, customer_id, current_time, ip, mac, device_id, amt, transtype, rule))
+            cursor.execute("INSERT INTO Events (Event_Description, Customer_ID, Date_Time, IP_Address, Mac_Address, Device_ID, Amount, Transaction_Type, Rule_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (event_description, customer_id, current_time, ip, mac, device_id, amt, transtype, rule))
+            cursor.execute("INSERT INTO Events (Event_Description, Customer_ID, Date_Time, IP_Address, Mac_Address, Device_ID, Amount, Transaction_Type, Rule_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (event_description, customer_id, current_time, ip, mac, device_id, amt, transtype, rule))
+            cursor.execute("INSERT INTO Events (Event_Description, Customer_ID, Date_Time, IP_Address, Mac_Address, Device_ID, Amount, Transaction_Type, Rule_ID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (event_description, customer_id, current_time, ip, mac, device_id, amt, transtype, rule))
+            conn.commit()
+    except pyodbc.Error as e:
+        print(f"Error inserting event: {e}")
+    finally:
+        conn.close()
+
 def login():
     username = username_entry.get()
     password = password_entry.get()
@@ -124,16 +161,18 @@ def login():
 
 # Function to check any occurrences of rule 2
 def check_incorrect_logins():
-    df = pd.read_sql("SELECT IP_Address, COUNT(*) AS c FROM Events GROUP BY IP_Address, Rule_ID HAVING Rule_ID = '2' AND COUNT(*) >= 5;", conn)
-    print(df.to_string())
+    df = pd.read_sql("SELECT Event_Description, IP_Address, Mac_Address, Device_ID, Amount, Transaction_Type, Rule_ID, COUNT(*) AS Count_Total FROM Events GROUP BY Event_Description, IP_Address, Mac_Address, Device_ID, Rule_ID, Amount, Transaction_Type HAVING Rule_ID = '2' AND COUNT(*) >= 5;", conn)
+   # print(df.to_string())
+    df.to_csv("incorrect_logins.csv")
     if len(df) != 0:
         print("Suspicious Activity Detected. Alerting Email, Security, AI Machine Learning System")
         send_mail(send_from=username,
-                  subject="[Banking System] Alert - Suspicious Activity - Large Transaction",
+                  subject="[Banking System] Alert - Suspicious Activity - Multiple Incorrect Logins",
                   text="Banking System Detected Large Transfer of Funds.",
                   send_to=None,
                   # File directory
-                  files=[r"./large_transactions.csv"])
+                  files=[r"./incorrect_logins.csv"])
+        send_text(phone, carrier, 'Subject: Banking System\n\nSuspicious Activity Detected - Multiple Incorrect Logins')
     else:
         print("No Suspicious Behavior Detected")
 
@@ -150,8 +189,53 @@ def check_large_transactions():
                   send_to=None,
                   # File directory
                   files=[r"./large_transactions.csv"])
+        send_text(phone, carrier, 'Subject: Banking System\n\nSuspicious Activity Detected - Large Transaction')
     else:
         print("No Suspicious Behavior Detected")
+
+def check_tor_nodes():
+    # Open and read TOR node file into Array or List
+
+    tor_text_file = open("dan-exit-nodes.txt", "r")  # create file object
+    lines = tor_text_file.readlines()  # readlines into list
+    print(lines)
+    print("the number of lines in the TOR list of exit nodes:", len(lines))
+    tor_text_file.close()
+
+    # Open and Read Login file into Array
+
+    # Check for presence of SourceIP string in the Tor Array
+
+    # import csv
+    with open('login-attempt.csv', newline='') as csvfile:
+        LoginReaderObject = csv.reader(csvfile, delimiter=',')
+        for row in LoginReaderObject:
+            # print(row)
+
+            ipNumber = row[2]  # Identify Source IP, ignoring row header if present
+        print("This login attempt is from", ipNumber)
+
+    print("---------------")
+    found = False
+    target = ipNumber
+
+    for item in lines:
+        itemStripped = item.rstrip()  # pulls off the /n character from each item
+        # print(itemStripped)
+        # print(target)
+        if itemStripped == target:
+            print(item, "Warning: this ip address matches a forbidden IP address, a TOR EXIT NODE")
+            found = True  # the atttempted login was in the blacklist
+            break
+    print("match = ", found)
+
+    if not found:
+        print("--Since this IP address was not in the TOR blacklist, login can proceede")
+        # Allow Login
+
+    if found:
+        print("since this IP address matches a forbidden IP address, a TOR EXIT NODE, Login is BLOCKED")
+        # Block Login and Send Alert Message via Email
 
 
 # Function to use SMTP to send an email to a device, code from https://stackoverflow.com/questions/3362600/how-to-send-email-attachments by Ferrarezi
@@ -206,6 +290,9 @@ CARRIERS = {
     "sprint": "@messaging.sprintpcs.com"
 }
 
+#Set phone number for text messages. Don't forget to change carrier
+phone = '6786002292'
+carrier = 'tmobile'
 
 
 #Menu for operation
@@ -217,36 +304,39 @@ while ans:
     3) Simulate Incorrect Logins
     4) Check for Login
     5) Check for Transactions
-    6) Quit
+    6) Check TOR Nodes
     7) Email Test
     8) Text Test
-    9) File Check
+    9) Quit
     """)
     if '1' in ans:
         print_events()
     elif '2' in ans:
         insert_event()
     elif '3' in ans:
-        #Needs to be implemented
+        insert_login_fail()
     elif '4' in ans:
         check_incorrect_logins()
     elif '5' in ans:
         check_large_transactions()
     elif '6' in ans:
-        ans = False
+        check_tor_nodes()
     elif '7' in ans:
         # Email test-Sends email from t1frauddetection.17 to itself with subject and text, optional file
         send_mail(send_from=username,
                   subject="[Banking System] Alert - Message",
                   text="Message system",
-                  send_to=None,
+                  send_to=['ecksehrin@gmail.com'],
                   #File directory
                   files=None)
     elif '8' in ans:
-        send_text('6786002292', 'tmobile', 'Subject: Banking System\n\nSuspicious Activity Detected')
+        send_text(phone, carrier, 'Subject: Banking System\n\nSuspicious Activity Detected')
     elif '9' in ans:
-        cwd = os.getcwd()  # Get the current working directory (cwd)
-        files = os.listdir(cwd)  # Get all the files in that directory
-        print("Files in %r: %s" % (cwd, files))
+        ans = False
     elif ans !="":
       print("\n Not Valid Choice Try again")
+
+        #Check current file directory
+      #cwd = os.getcwd()  # Get the current working directory (cwd)
+      #files = os.listdir(cwd)  # Get all the files in that directory
+      #print("Files in %r: %s" % (cwd, files))
