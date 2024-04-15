@@ -61,9 +61,6 @@ def print_events():
     # Prints Pandas version of table
     print(df.to_string())
 
-    cursor.close()
-    conn.close()
-
 # Function to insert event into SQL Server table
 def insert_event(username=None):
     try:
@@ -168,7 +165,7 @@ def check_incorrect_logins():
         print("Suspicious Activity Detected. Alerting Email, Security, AI Machine Learning System")
         send_mail(send_from=username,
                   subject="[Banking System] Alert - Suspicious Activity - Multiple Incorrect Logins",
-                  text="Banking System Detected Large Transfer of Funds.",
+                  text="Banking System Detected Multiple Incorrect Logins.",
                   send_to=None,
                   # File directory
                   files=[r"./incorrect_logins.csv"])
@@ -198,8 +195,8 @@ def check_tor_nodes():
 
     tor_text_file = open("dan-exit-nodes.txt", "r")  # create file object
     lines = tor_text_file.readlines()  # readlines into list
-    print(lines)
-    print("the number of lines in the TOR list of exit nodes:", len(lines))
+   # print(lines)
+    #print("the number of lines in the TOR list of exit nodes:", len(lines))
     tor_text_file.close()
 
     # Open and Read Login file into Array
@@ -236,6 +233,12 @@ def check_tor_nodes():
     if found:
         print("since this IP address matches a forbidden IP address, a TOR EXIT NODE, Login is BLOCKED")
         # Block Login and Send Alert Message via Email
+        send_mail(send_from=username,
+                  subject="[Banking System] Alert - Suspicious Activity - Blacklisted TOR Node",
+                  text="Banking System Detected User Connected with Blacklisted TOR Node. Access was denied.",
+                  send_to=None,
+                  # File directory
+                  files=[r"./large_transactions.csv"])
 
 
 # Function to use SMTP to send an email to a device, code from https://stackoverflow.com/questions/3362600/how-to-send-email-attachments by Ferrarezi
@@ -332,6 +335,8 @@ while ans:
     elif '8' in ans:
         send_text(phone, carrier, 'Subject: Banking System\n\nSuspicious Activity Detected')
     elif '9' in ans:
+        cursor.close()
+        conn.close()
         ans = False
     elif ans !="":
       print("\n Not Valid Choice Try again")
