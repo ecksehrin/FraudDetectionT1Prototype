@@ -1,60 +1,29 @@
-from flask import Flask, request
-import pyodbc
-import json
-
-# Azure SQL Database connection details
-server = ''
-database = ''
-username = ''
-password = ''
-driver = '{}'
-
-# Establish connection
-conn = pyodbc.connect('DRIVER='+driver+';SERVER='+server+';DATABASE='+database+';UID='+username+';PWD='+password)
-cursor = conn.cursor()
+from flask import Flask, request, jsonify
+import datetime
 
 app = Flask(__name__)
 
-@app.route('/api/location-update', methods=['POST'])
-def receive_location_update():
-    event_data = request.json
-    record_event('location_update', event_data)
-    return "Location update event received and recorded successfully", 200
-
-@app.route('/api/login-attempts', methods=['POST'])
-def receive_login_attempts():
-    event_data = request.json
-    record_event('login_attempts', event_data)
-    return "Login attempts event received and recorded successfully", 200
-
-@app.route('/api/transactions', methods=['POST'])
-def receive_transactions():
-    event_data = request.json
-    record_event('transactions', event_data)
-    return "Transaction event received and recorded successfully", 200
-
-@app.route('/api/daily-limit-exceeded', methods=['POST'])
-def receive_daily_limit_exceeded():
-    event_data = request.json
-    record_event('daily_limit_exceeded', event_data)
-    return "Daily limit exceeded event received and recorded successfully", 200
-
-@app.route('/api/device-identification', methods=['POST'])
-def receive_device_identification():
-    event_data = request.json
-    record_event('device_identification', event_data)
-    return "Device identification event received and recorded successfully", 200
-
-def record_event(event_type, event_data):
-    # Insert event data into the database
-    cursor.execute("""
-        INSERT INTO events (event_type, event_data)
-        VALUES (?, ?)
-    """, (
-        event_type,
-        json.dumps(event_data)  # Convert event_data to JSON string
-    ))
-    conn.commit()
+# Endpoint to receive events
+@app.route('/events', methods=['POST'])
+def receive_event():
+    # Get data from the request
+    data = request.json
+    
+    # Extract event details
+    event_type = data.get('event_type')
+    event_details = data.get('event_details')
+    user_id = data.get('user_id')
+    timestamp = datetime.datetime.utcnow()
+    
+    # Process the event (you can save it to a database, perform some actions, etc.)
+    print("Received event:")
+    print("Event type:", event_type)
+    print("Event details:", event_details)
+    print("User ID:", user_id)
+    print("Timestamp:", timestamp)
+    
+    # You can return a response if needed
+    return jsonify({'message': 'Event received successfully'})
 
 if __name__ == '__main__':
     app.run(debug=True)
