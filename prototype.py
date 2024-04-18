@@ -329,7 +329,7 @@ while ans:
         send_mail(send_from=username,
                   subject="[Banking System] Alert - Message",
                   text="Message system",
-                  send_to=['ecksehrin@gmail.com'],
+                  send_to=None,
                   #File directory
                   files=None)
     elif '8' in ans:
