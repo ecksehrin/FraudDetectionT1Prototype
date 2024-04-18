@@ -169,7 +169,7 @@ def check_incorrect_logins():
                   send_to=None,
                   # File directory
                   files=[r"./incorrect_logins.csv"])
-        send_text(phone, carrier, 'Subject: Banking System\n\nSuspicious Activity Detected - Multiple Incorrect Logins')
+        #send_text(phone, carrier, 'Subject: Banking System\n\nSuspicious Activity Detected - Multiple Incorrect Logins')
     else:
         print("No Suspicious Behavior Detected")
 
@@ -179,7 +179,7 @@ def check_large_transactions():
     #print(df.to_string())
     df.to_csv("large_transactions.csv")
     if len(df) != 0:
-        print("Suspicious Activity Detected. Alerting Email, Security, AI Machine Learning System")
+        print("Suspicious Activity Detected. Alerting Email, Text, Security, AI Machine Learning System")
         send_mail(send_from=username,
                   subject="[Banking System] Alert - Suspicious Activity - Large Transaction",
                   text="Banking System Detected Large Transfer of Funds.",
@@ -238,7 +238,7 @@ def check_tor_nodes():
                   text="Banking System Detected User Connected with Blacklisted TOR Node. Access was denied.",
                   send_to=None,
                   # File directory
-                  files=[r"./large_transactions.csv"])
+                  files=[r"./login-attempt.csv"])
 
 
 # Function to use SMTP to send an email to a device, code from https://stackoverflow.com/questions/3362600/how-to-send-email-attachments by Ferrarezi
