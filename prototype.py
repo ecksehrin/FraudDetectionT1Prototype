@@ -32,7 +32,7 @@ cnxn_str = (
     'SERVER=frauddetectiont1.database.windows.net;'
     'DATABASE=FraudDetectionDatabase;'
     'UID=team1;'
-    'PWD=T1frauddetection'
+    'PWD=PasswordHere
 )
 
 #pyodbc connect function to connect to SQL Database
@@ -294,7 +294,7 @@ CARRIERS = {
 }
 
 #Set phone number for text messages. Don't forget to change carrier
-phone = '6786002292'
+phone = 'Phone#Here'
 carrier = 'tmobile'
 
 
